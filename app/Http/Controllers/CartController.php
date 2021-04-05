@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\CartItem;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\ProductOption;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -63,8 +65,12 @@ class CartController extends Controller
         return empty($request->header('referer')) ? redirect()->route('cart.index') : redirect()->back();
     }
 
-    public function checkout(){
+    public function checkout(Request $request){
+
+    $order = $this->createOrderByCart($request);
+
         return view('cart.checkout', [
+            'orders' => $order
         ]);
     }
 
@@ -303,5 +309,33 @@ class CartController extends Controller
             },
             0
         );
+    }
+
+    private function createOrderByCart(Request $request){
+
+        $current_user = $request->user();
+        $cart = $current_user ->getPurchaseCartOrCreate();
+        $amount = $this->getEndPrice($request);
+
+        DB::transaction(function () use ($current_user, $cart, $amount){
+            $order = Order::create([
+                'amount' => $amount,
+                'address' => 'testing....',
+                'user_id' => $current_user->id,
+            ]);
+
+            // throw new \Exception('test');
+
+            $order->orderItems()->saveMany($cart->cartItems->map(function($cartItem){
+                return new OrderItem([
+                    'name' => $cartItem->productOption->fullName(),
+                    'price' => $cartItem->productOption->price,
+                    'quantity' => $cartItem->quantity,
+                    'product_option_id' => $cartItem->product_option_id
+                ]);
+            }));
+
+            $cart->cartItems()->delete();
+        });
     }
 }

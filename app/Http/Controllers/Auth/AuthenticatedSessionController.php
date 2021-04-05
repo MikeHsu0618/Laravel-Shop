@@ -15,9 +15,14 @@ class AuthenticatedSessionController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function create()
+    public function create(Request $request)
     {
-        return view('auth.login');
+        $query = [];
+
+        if(strpos($request->headers->get('referer'), '/cart')){
+            $query['to'] = 'cart';
+        }
+        return view('auth.login' , ['query' => $query]);
     }
 
     /**
@@ -37,8 +42,11 @@ class AuthenticatedSessionController extends Controller
         }
 
         $request->session()->regenerate();
-
-        return redirect(RouteServiceProvider::HOME);
+        if( $request->has('to') && $request->query('to') == 'cart' ) {
+            return redirect()->route('cart.index');
+        } else {
+            return redirect(RouteServiceProvider::HOME);
+        }
     }
 
     /**

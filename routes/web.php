@@ -60,6 +60,9 @@ Route::prefix('cart')->name('cart.')->group(function () {
 
 // == logged in ==
 // orders
+Route::middleware('auth')->group(function(){
+   Route::resource('orders', OrderController::class)->only(['index','show']);
+});
 // profile
 // cart/purchase
 
@@ -80,7 +83,7 @@ Route::prefix('controls')->name('controls.')->middleware(['auth:admin'])->group(
     Route::resource('categories.subcategories', ControlsSubcategoryController::class)->except('show');
 
     Route::resource('users', ControlsUserController::class)->except('show');
-    Route::resource('cart', ControlsCartController::class)->only('index');
+    Route::resource('carts', ControlsCartController::class)->only('index');
 });
 
 

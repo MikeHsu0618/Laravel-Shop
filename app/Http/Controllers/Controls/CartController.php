@@ -9,7 +9,7 @@ class CartController extends Controller
 {
     public function index()
     {
-        return  view('controls.cart.index');
+        return  view('controls.carts.index');
     }
 
 }

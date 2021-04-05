@@ -21,6 +21,13 @@
                         所有商品
                     </x-nav-link>
                 </div>
+{{--                @auth--}}
+{{--                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">--}}
+{{--                    <x-nav-link :href="route('orders.index')" :active="request()->routeIs('orders.index')">--}}
+{{--                        訂單--}}
+{{--                    </x-nav-link>--}}
+{{--                </div>--}}
+{{--                @endauth--}}
             </div>
 
             <!-- Settings Dropdown -->
@@ -61,6 +68,10 @@
                                     <x-responsive-nav-link :href="route('controls.home')" >
                                         {{ __('Controls') }}
                                     </x-responsive-nav-link>
+                                    <x-responsive-nav-link :href="route('orders.index')" >
+                                        {{ __('訂單') }}
+                                    </x-responsive-nav-link>
+
                                 @endauth
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
@@ -108,6 +119,14 @@
             <x-responsive-nav-link :href="route('root')" :active="request()->routeIs('root')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('products.index')" :active="request()->routeIs('products.index')">
+                所有商品
+            </x-responsive-nav-link>
+            @auth('web')
+            <x-responsive-nav-link :href="route('orders.index')" :active="request()->routeIs('orders.index')">
+                訂單
+            </x-responsive-nav-link>
+            @endauth
             <x-responsive-nav-link :href="route('cart.index')" :active="request()->routeIs('cart.index')">
                 購物車
             </x-responsive-nav-link>
