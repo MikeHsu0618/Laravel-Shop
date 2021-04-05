@@ -50,4 +50,15 @@ class Product extends Model
     {
         return self::published_statuses[$this->published_status] == self::DRAFT;
     }
+
+    public function prices()
+    {
+        if (!$this->_prices){
+            $this->_prices = $this->product_options->map(function($product_option){
+                return $product_option->price;
+            });
+        }
+
+        return $this->_prices;
+    }
 }

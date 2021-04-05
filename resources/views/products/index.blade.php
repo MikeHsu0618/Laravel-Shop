@@ -1,15 +1,21 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class='px-2 pb-6 grid grid-cols-8 gap-6'>
-        <div class="col-span-8 sm:col-span-8 lg:col-span-8">
-            <h1 class='px-2 py-4'>Products</h1>
+    <div class='px-2 pb-6 grid grid-cols-12'>
+        <div class="col-span-12 sm:col-span-12 lg:col-span-12">
+            <h1 class='px-6 py-4' style='font-size: 36px; bold'>Products</h1>
         </div>
-        <div class="col-span-8 sm:col-span-8 lg:col-span-2">
+        <div class="col-span-12 sm:col-span-12 lg:col-span-2">
             @include('products/components/sidebar')
         </div>
-        <div class="col-span-8 sm:col-span-8 lg:col-span-6">
-
+        <div class="col-span-12 sm:col-span-12 lg:col-span-10">
+            <div class='px-2 pb-6 grid grid-cols-12 gap-6'>
+                @foreach ($products as $product)
+                    <div class="col-span-12 sm:col-span-6 lg:col-span-4">
+                        @include('products/components/card')
+                    </div>
+                @endforeach
+            </div>
         </div>
     </div>
 @endsection
