@@ -2,74 +2,83 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CartItem;
 use App\Models\ProductOption;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 
 class CartController extends Controller
 {
-    public function index(Request $request){
-
+    public function index(Request $request)
+    {
+        $endPrice = $this->getEndPrice($request);
         $cartItems = $this->getCartItemsArray($request);
-
         return view('cart.index', [
-            "cartItems" => $cartItems
+            "cartItems" => $cartItems,
+            "endPrice" => $endPrice
         ]);
     }
 
-    public function addToCart(Request $request) {
+    public function addToCart(Request $request)
+    {
 
         $current_user = $request->user();
 
         if ($current_user) {
-
+            $this->addToDBCart($request);
         } else {
             $this->addToCookieCart($request);
         }
 
-        if(empty($request->header('referer'))) {
+        if (empty($request->header('referer'))) {
             return redirect()->route('cart.index');
         } else {
             return redirect()->back();
         }
     }
 
-    public function deleteCartItem(Request $request){
+    public function deleteCartItem(Request $request)
+    {
         $current_user = $request->user();
 
         if ($current_user) {
-
+            return $this->deleteFromDBCart($request) ? response('success') : response('failed');
         } else {
-            if ($this->deleteFromCookieCart($request)) {
-                return response('success');
-            } else {
-                return response('failed');
-            }
+            return $this->deleteFromCookieCart($request) ? response('success') : response('failed');
         }
     }
 
-    public function updateCartItems(Request $request){
+    public function updateCartItems(Request $request)
+    {
         $current_user = $request->user();
 
         if ($current_user) {
-
+            $this->updateToDBCart($request);
         } else {
             $this->updateToCookieCart($request);
         }
-        return empty($request->header('referer'))?redirect()->route('cart.index'):redirect()->back();
+        return empty($request->header('referer')) ? redirect()->route('cart.index') : redirect()->back();
     }
 
-    private function updateToCookieCart(Request $request){
-        if ($request->has('product_options')){
+    public function checkout(){
+        return view('cart.checkout', [
+        ]);
+    }
+
+    private function updateToCookieCart(Request $request)
+    {
+        if ($request->has('product_options')) {
             $product_options = $request->input('product_options');
 
-            if (is_array($product_options)){
+            if (is_array($product_options)) {
                 $cookieCart = [];
-                foreach($product_options as $productOptionId => $value){
-                    if (isset($value['quantity'])){
+                foreach ($product_options as $productOptionId => $value) {
+                    if (isset($value['quantity'])) {
                         $quantity = intval($value['quantity']);
-                        if ($quantity > 0){
+                        if ($quantity > 0) {
                             $product_option = ProductOption::findIfEnabled($productOptionId);
                             if ($product_option) {
                                 $cookieCart[$productOptionId] = $quantity;
@@ -82,12 +91,56 @@ class CartController extends Controller
         }
     }
 
-    private function deleteFromCookieCart(Request $request){
-        if ($request->has('product_option_id')){
+    private function updateToDBCart(Request $request)
+    {
+        if ($request->has('product_options')) {
+            $product_options = $request->input('product_options');
+
+            if (is_array($product_options)) {
+                $cart = $request->user()->getPurchaseCartOrCreate();
+                $cartItemIdsToDelete = [];
+                $inputProductOptionsIds = array_keys($product_options);
+                foreach ($cart->cartItems as $cartItem) {
+                    if (in_array($cartItem->product_option_id, $inputProductOptionsIds)) {
+                        array_push($cartItemIdsToDelete, $cartItem->id);
+                    }
+                }
+                DB::table('cart_items')->whereIn('id', $cartItemIdsToDelete)->delete();
+
+                foreach ($product_options as $productOptionId => $value) {
+                    if (isset($value['quantity'])) {
+                        $quantity = intval($value['quantity']);
+                        if ($quantity > 0) {
+                            $product_option = ProductOption::findIfEnabled($productOptionId);
+                            if ($product_option) {
+                                $cartItem = $cart->cartItems()->where('product_option_id', $productOptionId)->first();
+                                if ($cartItem) {
+                                    $cartItem->quantity += $quantity;
+                                    $cartItem->save();
+                                } else {
+                                    $cart->cartItems()->save(
+                                        new Cartitem([
+                                            'product_option_id' => $productOptionId,
+                                            'quantity' => $quantity
+                                        ])
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+    private function deleteFromCookieCart(Request $request)
+    {
+        if ($request->has('product_option_id')) {
             $productOptionId = intval($request->input('product_option_id'));
             $cookieCart = $this->getCartFromCookie();
 
-            if ( isset($cookieCart[$productOptionId]) ){
+            if (isset($cookieCart[$productOptionId])) {
                 unset($cookieCart[$productOptionId]);
                 $this->saveCookieCart($cookieCart);
                 return true;
@@ -96,17 +149,32 @@ class CartController extends Controller
         return false;
     }
 
-    private function addToCookieCart(Request $request){
+    private function deleteFromDBCart(Request $request)
+    {
+        if ($request->has('product_option_id')) {
+            $productOptionId = intval($request->input('product_option_id'));
+            $cart = $request->user()->getPurchaseCartOrCreate();
+            $cartItem = $cart->cartItems()->where('product_option_id', $productOptionId)->first();
+            if ($cartItem) {
+                $cartItem->delete();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function addToCookieCart(Request $request)
+    {
         $cookieCart = $this->getCartFromCookie();
 
-        foreach($request->input() as $key => $value){
-            if (preg_match('/^product_option_[0-9]+$/', $key)){
+        foreach ($request->input() as $key => $value) {
+            if (preg_match('/^product_option_[0-9]+$/', $key)) {
                 $quantity = intval($value);
                 $productOptionId = intval(str_replace('product_option_', '', $key));
-                if ($quantity && $productOptionId){
+                if ($quantity && $productOptionId) {
                     $product_option = ProductOption::findIfEnabled($productOptionId);
-                    if ($product_option){
-                        if (isset($cookieCart[$productOptionId])){
+                    if ($product_option) {
+                        if (isset($cookieCart[$productOptionId])) {
                             $cookieCart[$productOptionId] += $quantity;
                         } else {
                             $cookieCart[$productOptionId] = $quantity;
@@ -119,40 +187,70 @@ class CartController extends Controller
         $this->saveCookieCart($cookieCart);
     }
 
-    private function getCartFromCookie(){
+    private function addToDBCart(Request $request)
+    {
+        $cart = $request->user()->getPurchaseCartOrCreate();
+
+        foreach ($request->input() as $key => $value) {
+            if (preg_match('/^product_option_[0-9]+$/', $key)) {
+                $quantity = intval($value);
+                $productOptionId = intVal(str_replace('product_option_', '', $key));
+                if ($quantity && $productOptionId) {
+                    $product_option = ProductOption::findIfEnabled($productOptionId);
+                    if ($product_option) {
+                        $cartItem = $cart->cartItems()->where('product_option_id', $productOptionId)->first();
+                        if ($cartItem) {
+                            $cartItem->quantity += $quantity;
+                            $cartItem->save();
+                        } else {
+                            $cart->cartItems()->save(
+                                new CartItem([
+                                    'product_option_id' => $productOptionId,
+                                    'quantity' => $quantity
+                                ]));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private function getCartFromCookie()
+    {
         $jsonCart = Cookie::get('cart');
         return (!is_null($jsonCart)) ? json_decode($jsonCart, true) : [];
     }
 
-    private function saveCookieCart($cookieCart){
+    private function saveCookieCart($cookieCart)
+    {
         $cartToJson = empty($cookieCart) ? "{}" : json_encode($cookieCart, true);
         Cookie::queue(
             Cookie::make('cart', $cartToJson, 60 * 24 * 7, null, null, false, false)
         );
     }
 
-    private function getCartItemsArray(Request $request) {
+    private function getCartItemsArray(Request $request)
+    {
         $current_user = $request->user();
-        if ($current_user){
-                $cartItems = $current_user->cart->cartItems;
+        $cartItemsAry = [];
+        if ($current_user) {
+            $this->syncCookieCartToDBCart($current_user);
 
-                $cartItemsAry =[];
-                foreach ($cartItems as $cartItem){
-                    $productOption = ProductOption::findIfEnabled($cartItems->product_option_id);
-                    if ($productOption) {
-                        array_push($cartItemsAry, [
-                            "productOption" => $productOption,
-                            "quantity" => $quantity,
-                        ]);
-                    } else {
-                        unset($cookieCart[$productOptionId]);
-                    }
+            $cartItems = $current_user->getPurchaseCartOrCreate()->cartItems;
+            foreach ($cartItems as $cartItem) {
+                $productOption = ProductOption::findIfEnabled($cartItem->product_option_id);
+                if ($productOption) {
+                    array_push($cartItemsAry, [
+                        "productOption" => $productOption,
+                        "quantity" => $cartItem->quantity,
+                    ]);
+                } else {
+                    $cartItem->delete();
                 }
+            }
         } else {
             $cookieCart = $this->getCartFromCookie();
-
-            $cartItemsAry = [];
-            foreach($cookieCart as $productOptionId => $quantity){
+            foreach ($cookieCart as $productOptionId => $quantity) {
                 $productOption = ProductOption::findIfEnabled($productOptionId);
                 if ($productOption) {
                     array_push($cartItemsAry, [
@@ -165,7 +263,45 @@ class CartController extends Controller
             }
             $this->saveCookieCart($cookieCart);
 
-            return $cartItemsAry;
         }
+        return $cartItemsAry;
+    }
+
+    private function syncCookieCartToDBCart(User $user)
+    {
+        if ($user) {
+            $cookieCart = $this->getCartFromCookie();
+            $cart = $user->getPurchaseCartOrCreate();
+            foreach ($cookieCart as $productOptionId => $quantity) {
+                $productOption = ProductOption::findIfEnabled($productOptionId);
+                if ($productOption) {
+                    $cartItem = $cart->cartItems()->where('product_option_id', $productOptionId)->first();
+                    if ($cartItem) {
+                        $cartItem->quantity += $quantity;
+                        $cartItem->save();
+                    } else {
+                        $cart->cartItems()->save(
+                            new CartItem([
+                                'product_option_id' => $productOptionId,
+                                'quantity' => $quantity
+                            ])
+                        );
+                    }
+                }
+            }
+            $this->saveCookieCart([]);
+        }
+    }
+
+    private function getEndPrice(Request $request){
+        return array_reduce(
+            $this->getCartItemsArray($request),
+            function ($currentValue, $cartItemObj){
+                $productOption = $cartItemObj["productOption"];
+                $quantity = $cartItemObj["quantity"];
+                return $currentValue + intval($quantity) * $productOption->price;
+            },
+            0
+        );
     }
 }

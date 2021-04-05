@@ -54,6 +54,8 @@ Route::prefix('cart')->name('cart.')->group(function () {
     Route::post('/addToCart', [CartController::class, 'addToCart'])->name('addToCart');
     Route::delete('/deleteCartItem', [CartController::class, 'deleteCartItem'])->name('deleteCartItem');
     Route::patch('/updateCartItems', [CartController::class, 'updateCartItems'])->name('updateCartItems');
+
+    Route::middleware(['auth'])->get('/checkout', [CartController::class, 'checkout'])->name('checkout');
 });
 
 // == logged in ==

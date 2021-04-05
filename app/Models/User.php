@@ -46,16 +46,23 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Cart::class);
     }
 
+    public function  purchase_cart(){
+        return $this->hasOne(Cart::class)->where('cart_type', Cart::typeIndex(Cart::PURCHASE));
+    }
+
     public function user(){
         return $this->belongsTo(User::class);
     }
 
-    public static function typeIndex($targetName){
-        foreach(self::types as $index => $name){
-            if ($targetName == $name) {
-                return $index;
-            }
+    public function getPurchaseCartOrCreate(){
+        $purchase_cart = $this->purchase_cart;
+
+        if (!$purchase_cart){
+            $purchase_cart = Cart::create([
+               'user_id' => $this->id,
+               'cart_type' => Cart::typeIndex(Cart::PURCHASE)
+            ]);
         }
-        return null;
+        return $purchase_cart;
     }
 }

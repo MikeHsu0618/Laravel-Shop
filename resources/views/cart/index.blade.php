@@ -2,7 +2,6 @@
 
 @section('content')
 
-
     <div class='px-2 py-6 grid grid-cols-12'>
         <div class="col-span-12 sm:col-span-12 lg:col-span-8">
             <h3 class="text-lg leading-6 font-medium text-gray-900 pb-4">
@@ -25,10 +24,11 @@
                             </div>
                         @else
                             @foreach($cartItems as $cartItem)
-                                <?php
+
+                                @php
                                     $product_option = $cartItem['productOption'];
                                     $quantity = $cartItem['quantity'];
-                               ?>
+                                @endphp
 
                                 <div class='grid grid-cols-12'>
                                     <div class='col-span-5 sm:col-span-2 lg:col-span-2 '>
@@ -87,20 +87,34 @@
                                     </div>
                                 </div>
                             @endforeach
+                            <div class='py-4'>
+                                <x-button>
+                                    更新購物車
+                                </x-button>
+                            </div>
                         @endif
-                        <div class='py-4'>
-                            <x-button>
-                                更新購物車
-                            </x-button>
-                        </div>
                     </form>
                 </div>
             </div>
         </div>
-        <div class="col-span-12 sm:col-span-12 lg:col-span-4">
-
+        <div class="col-span-12 sm:col-span-12 lg:col-span-4 px-8 py-10">
+            <div class='bg-white shadow overflow-hidden sm:rounded-sm sm:px-4 py-4'>
+                <p class='pb-6 text-center' style='font: 36px bold;'>價錢</p>
+                <p class='pb-6 text-center' style='font: 28px bold;'>$ {{ $endPrice }}</p>
+                <div class='pb-6 text-center'>
+                    <a href="{{ route('cart.checkout')}}">
+                        <x-button
+                            type='button'
+                            class="bg-red-500 hover:bg-red-700"
+                        >
+                            結帳
+                        </x-button>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
+
 @endsection
 
 @section('inline_js')
