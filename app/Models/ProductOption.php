@@ -11,7 +11,19 @@ class ProductOption extends Model
 
     protected $fillable = ['name', 'price', 'enabled', 'image'];
 
-    public function Product(){
+    public function Product()
+    {
         return $this->belongsTo(Product::class);
+    }
+
+    static function findIfEnabled($productOptionId)
+    {
+        $option = self::where('enabled', true)->where('id', $productOptionId)->first();
+        if ($option){
+            if (@$option->product->is_published()){
+                return $option;
+            }
+        }
+        return null;
     }
 }

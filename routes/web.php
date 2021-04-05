@@ -29,10 +29,6 @@ use App\Http\Controllers\Controls\UserController as ControlsUserController;
 use App\Http\Controllers\Controls\CartController as ControlsCartController;
 
 
-
-
-
-
 // use App\Http\Controllers\MemberController;
 // use App\Http\Controllers\MemberSessionController;
 // Route::prefix('members')->name('members.')->group(function(){
@@ -49,15 +45,21 @@ Route::get('/', [PageController::class, 'home'])->name('root');
 // == not logged in ==
 // page
 // products
+Route::resource('products', ProductController::class)->only('show', 'index');
 // products/search
 // users
-// carts/index
-Route::resource('products', ProductController::class )->only('show','index');
+// cart/index
+Route::prefix('cart')->name('cart.')->group(function () {
+    Route::get('/', [CartController::class, 'index'])->name('index');
+    Route::post('/addToCart', [CartController::class, 'addToCart'])->name('addToCart');
+    Route::delete('/deleteCartItem', [CartController::class, 'deleteCartItem'])->name('deleteCartItem');
+    Route::patch('/updateCartItems', [CartController::class, 'updateCartItems'])->name('updateCartItems');
+});
 
 // == logged in ==
 // orders
 // profile
-// carts/purchase
+// cart/purchase
 
 // == admin ==
 // controls/page
@@ -66,17 +68,17 @@ Route::resource('products', ProductController::class )->only('show','index');
 // controls/brands
 // controls/categories , subcategories
 // controls/users
-// controls/carts
+// controls/cart
 Route::prefix('controls')->name('controls.')->middleware(['auth:admin'])->group(function () {
     Route::get('/', [ControlsPageController::class, 'home'])->name('home');
-    Route::resource('products', ControlsProductController::class )->except('show');
-    Route::resource('orders', ControlsOrderController::class )->except('show', 'create', 'store');
+    Route::resource('products', ControlsProductController::class)->except('show');
+    Route::resource('orders', ControlsOrderController::class)->except('show', 'create', 'store');
     Route::resource('brands', ControlsBrandController::class)->except('show');
     Route::resource('categories', ControlsCategoryController::class)->except('show');
     Route::resource('categories.subcategories', ControlsSubcategoryController::class)->except('show');
 
     Route::resource('users', ControlsUserController::class)->except('show');
-    Route::resource('carts', ControlsCartController::class)->only('index');
+    Route::resource('cart', ControlsCartController::class)->only('index');
 });
 
 
@@ -84,4 +86,4 @@ Route::prefix('controls')->name('controls.')->middleware(['auth:admin'])->group(
 //     return view('dashboard');
 // })->middleware(['auth'])->name('dashboard');
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

@@ -51,6 +51,11 @@ class Product extends Model
         return self::published_statuses[$this->published_status] == self::DRAFT;
     }
 
+    public function is_published()
+    {
+        return self::published_statuses[$this->published_status] == self::ENABLED;
+    }
+
     public function prices()
     {
         if (!$this->_prices){

@@ -8,7 +8,8 @@
         </div>
         <div class="col-span-12 sm:col-span-12 lg:col-span-10">
             <h1 class='pb-4' style='font-size: 36px; bold'>{{ $product->name }}</h1>
-            <p class='pb-4'>品牌: {{ @$product->brand->name }} | 類別: {{ @$product->subcategory->category->name }} > {{ @$product->subcategory->name }}</p>
+            <p class='pb-4'>品牌: {{ @$product->brand->name }} | 類別: {{ @$product->subcategory->category->name }}
+                > {{ @$product->subcategory->name }}</p>
             <div class='px-2 pb-6 grid grid-cols-12 gap-6'>
                 <div class="col-span-12 sm:col-span-6 lg:col-span-8">
                     <div>
@@ -20,13 +21,15 @@
                         </div>
                         @foreach($product->product_options as $product_option)
                             <div class='col-span-4'>
-                                <img id='small_image_{{ $product_option->id }}' class='small_image pr-2 pb-2' src="{{ asset($product_option->image)}}">
+                                <img id='small_image_{{ $product_option->id }}' class='small_image pr-2 pb-2'
+                                     src="{{ asset($product_option->image)}}">
                             </div>
                         @endforeach
                     </div>
                 </div>
                 <div class="col-span-12 sm:col-span-6 lg:col-span-4">
-                    <form>
+                    <form action="{{ route('cart.addToCart') }}" method="post">
+                        @csrf
                         <p class='pb-4'>選項:</p>
                         <ul>
                             @foreach($product->product_options as $product_option)
@@ -53,9 +56,11 @@
                             @endforeach
                         </ul>
                         <div>
-                            <x-button class="bg-red-500 hover:bg-red-700">
+                            <button id='add_to_cart' type='submit'
+                                    class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150 bg-red-500 hover:bg-red-700"
+                                    disabled>
                                 加入購物車
-                            </x-button>
+                            </button>
                         </div>
                     </form>
                     <div class='py-4'>
@@ -86,29 +91,42 @@
                     var small_images = document.querySelectorAll('.small_image')
                     var large_image = document.querySelector('#large_image')
 
-                    for(var index = 0; index < small_images.length; index++){
+                    for (var index = 0; index < small_images.length; index++) {
                         var small_image = small_images[index]
-                        small_image.addEventListener('mouseover', function(e){
+                        small_image.addEventListener('mouseover', function (e) {
                             large_image.src = e.target.src
                         })
 
-                        small_image.addEventListener('click', function(e){
+                        small_image.addEventListener('click', function (e) {
                             large_image.src = e.target.src
                         })
                     }
 
-                    if (small_images.length > 0){
+                    if (small_images.length > 0) {
                         large_image.src = small_images[0].src
                     }
 
                     var product_options_select = document.querySelectorAll('select.product_option_select')
-                    for(var index = 0; index < product_options_select.length; index++){
+                    for (var index = 0; index < product_options_select.length; index++) {
                         var select = product_options_select[index]
-                        select.addEventListener('click', function(e){
+                        select.addEventListener('click', function (e) {
                             var id = e.target.getAttribute('data-target-id')
                             var small_image = document.querySelector('#small_image_' + id)
                             small_image.click()
                         })
+
+                        var add_to_cart_btn = document.querySelector('#add_to_cart')
+                        select.addEventListener('change', function (e) {
+                            add_to_cart_btn.disabled = true
+                            for (var selectIndex = 0; selectIndex < product_options_select.length; selectIndex++) {
+                                var targetSelect = product_options_select[selectIndex]
+                                if (targetSelect.value > 0) {
+                                    add_to_cart_btn.disabled = false
+                                    break
+                                }
+                            }
+                        })
                     }
+
                 </script>
 @endsection
