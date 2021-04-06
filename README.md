@@ -1,4 +1,40 @@
+# 甜點購物網站
 
+### 用Laravel8練習做出電商類網站之前後台架構
+
+試著利用
+
+商品選項->商品->小分類->分類->品牌
+
+商品選選項->商品->購物車->使用者
+
+練習使用 一對一、一對多、多對多 等交互關係
+
+>Structure
+>
+<img src="img/structure.png" width="90%"></img>
+
+<img src="img/structure2.png" width="90%"></img>
+
+>Products
+>
+<img src="img/products.png" width="90%"></img>
+
+>Products Backend
+>
+<img src="img/products2.png" width="90%"></img>
+
+>Order
+>
+<img src="img/order.png" width="90%"></img>
+
+>Cart
+>
+<img src="img/cart.png" width="90%"></img>
+
+>Categories
+>
+<img src="img/categories.png" width="90%"></img>
 
 
 <hr>
