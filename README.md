@@ -1,6 +1,6 @@
 # 甜點購物網站(未完)
 
-## DEMO: http://45.32.43.179/
+## DEMO: http://cvctrl-shop.com/
 
 ### 用Laravel8練習做出電商類網站之前後台架構
 
