@@ -9,11 +9,6 @@ class Order extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'order_number', 'payment_order_number', 'order_status',
-        'amount', 'address', 'user_id',
-    ];
-
     const NOT_SELECTED_PAYMENT = 'not_selected_payment';
     const WAITING_FOR_THE_TRANSFER = 'waiting_for_the_transfer';
     const PAID = 'paid';
@@ -28,22 +23,20 @@ class Order extends Model
         4 => self::CANCELLED,
     ];
 
+    protected $fillable = [
+        'order_number', 'payment_order_number', 'order_status',
+        'amount', 'address', 'user_id',
+    ];
+
+
     protected static function boot(){
         parent::boot();
-        //creating->>>在執行create前會執行的動作(會把要create的傳進來處理)
+
         static::creating(function ($query) {
             $query->order_number = $query->order_number ?? 'LPB' . now()->timestamp;
             $query->order_status = $query->order_status ?? Order::orderStatusesIndex(Order::NOT_SELECTED_PAYMENT);
             $query->payment_order_number = $query->payment_order_number ?? '';
         });
-    }
-
-    public function user(){
-        return $this->belongsTo(User::class);
-    }
-
-    public function orderItems(){
-        return $this->hasMany(OrderItem::class);
     }
 
     public static function orderStatusesIndex($targetName){
@@ -55,6 +48,16 @@ class Order extends Model
         return null;
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
     public function orderStatusStr()
     {
         return self::orderStatuses[$this->order_status];
@@ -63,5 +66,17 @@ class Order extends Model
     public function getRouteKeyName()
     {
         return 'order_number';
+    }
+
+    public function setToPaid()
+    {
+        $this->order_status = Order::orderStatusesIndex(self::PAID);
+        $this->save();
+    }
+
+    public function setToPending()
+    {
+        $this->order_status = Order::orderStatusesIndex(self::WAITING_FOR_THE_TRANSFER);
+        $this->save();
     }
 }

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="2d1281e7-e81b-4eba-b955-90c60b6199dc" name="CVCtrl">
+        <fileTransfer rootFolder="/var/www/pbshop" accessType="SFTP" host="cvctrl-shop.com" port="22" sshConfigId="4b786204-f4f4-4c64-b98f-50b06083f7af" sshConfig="root@cvctrl-shop.com:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
